@@ -16,11 +16,16 @@ void Init_All();
 int getImagePathFromFile(char *filepath,char * filename);
 int getCoordinatesFromFile(int *x, int *y,char * filename);
 void addCoordinateToFile(char *filepath,int x, int y);
+void getTurns(char * filename);
 
 int ECON;
 int LIVES;
 int LEVEL;
 int ROTATION;
+int BloonArray[41];
+int MOUSEX;
+int MOUSEY;
+int CANPLACE;
 
 /*this program must be run from the directory directly below images and src, not from within src*/
 /*notice the default arguments for main.  SDL expects main to look like that, so don't change it*/
@@ -54,6 +59,9 @@ int main(int argc, char *argv[])
   tile = LoadSprite("images/32_32_16_2sprite.png",32,32);
   getCoordinatesFromFile(&tx, &ty,"config.ini");
   fprintf(stdout,"x and y: (%i, %i)\n",tx,ty);
+
+  //getTurns("config.ini");
+
   //addCoordinateToFile("config.ini",7,11);
   /*
   if(tile != NULL)
@@ -66,7 +74,7 @@ int main(int argc, char *argv[])
   */
 
   //dummy tower for UI
-  towerDumb = LoadSprite("images/32_32_16_2sprite.png",32,32);
+  towerDumb = LoadSprite("images/tower.png",32,32);
   DrawSprite(towerDumb,buffer,942,22,0);
 
   //spawn the dummy bullet
@@ -101,16 +109,19 @@ int main(int argc, char *argv[])
 			if(waveInProg == 0)
 			{
 				bloonNum = LEVEL * 20;
-				startWave(15,3,bloonNum);
+				startWave(15,3,0,0,bloonNum);
 			}
 			doOnce = 1;
 		}
 
 		//spawn a tower
-		if(keys[SDLK_1]){spTower(mx,my,0,1); doOnce = 1;}
-		if(keys[SDLK_2]){spTower(mx,my,0,2); doOnce = 1;}
-		if(keys[SDLK_3]){spTower(mx,my,0,3); doOnce = 1;}
-		if(keys[SDLK_4]){spTower(mx,my,0,4); doOnce = 1;}
+		if(CANPLACE == 1){
+			if(keys[SDLK_1]){spTower(mx,my,0,1); doOnce = 1;}
+			if(keys[SDLK_2]){spTower(mx,my,0,2); doOnce = 1;}
+			if(keys[SDLK_3]){spTower(mx,my,0,3); doOnce = 1;}
+			if(keys[SDLK_4]){spTower(mx,my,0,4); doOnce = 1;}
+		}
+		CANPLACE = 1;
 
 		//start a wave
 		if(keys[SDLK_TAB])
@@ -232,3 +243,30 @@ int getCoordinatesFromFile(int *x, int *y,char * filename)
     if (y)*y = ty;
     return returnValue;
 }
+
+void getTurns(char * filename)
+{
+    FILE *fileptr = NULL;
+    char buf[255];
+
+    fileptr = fopen(filename,"r");
+
+    while (fscanf(fileptr,"%s",buf) != EOF)
+    {
+        if (strcmp(buf,"turnCoord1:")==0)
+        {
+            fscanf(fileptr,"%i %i %i %i", BloonArray[1], BloonArray[2], BloonArray[3], BloonArray[4]);
+        }
+		if (strcmp(buf,"turnCoord2:")==0)
+        {
+            fscanf(fileptr,"%i %i %i %i", BloonArray[5], BloonArray[6], BloonArray[7], BloonArray[8]);
+        }
+		if (strcmp(buf,"turnCoord3:")==0)
+        {
+            fscanf(fileptr,"%i %i %i %i", BloonArray[9], BloonArray[10], BloonArray[11], BloonArray[12]);
+        }
+    }
+
+    fclose(fileptr);
+}
+

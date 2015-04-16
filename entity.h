@@ -53,9 +53,11 @@ void bloonThink(Entity *thatEnt);
 void dumbThink(Entity *thatEnt);
 
 //scripting
-void startWave(int SpawnRate, int lvl2mix, int numBloons);
+void startWave(int SpawnRate, int lvl2mix, int lvl3mix, int lvl4mix, int numBloons);
 int spr;
 int l2m;
+int l3m;
+int l4m;
 int nbs;
 int bloonsSpawned;
 int waitTime;

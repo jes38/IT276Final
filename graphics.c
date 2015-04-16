@@ -6,6 +6,9 @@
 #include "graphics.h"
 #include "sprite.h"
 
+extern int MOUSEX;
+extern int MOUSEY;
+
 struct
 {
 	Uint32 state;
@@ -628,5 +631,7 @@ void DrawMouse()
   Mouse.frame = (Mouse.frame + 1)%16;
  Mouse.x = mx;
  Mouse.y = my;
+ MOUSEX = mx;
+ MOUSEY = my;
 }
 

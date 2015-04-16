@@ -12,6 +12,10 @@ extern int ECON;
 extern int LIVES;
 extern int LEVEL;
 extern int ROTATION;
+extern int MOUSEX;
+extern int MOUSEY;
+extern int CANPLACE;
+extern int BloonArray[];
 
 extern SDL_Surface *message;
 extern TTF_Font *font;
@@ -103,17 +107,27 @@ void spBloon(int type) //spawn a bloon of type 1 or 2
 {
 	Entity *bloon;
 
-	Sprite *bloonSprite1 = LoadSprite("images/16_16_16_2sprite.png",16,16);
-	Sprite *bloonSprite2 = LoadSprite("images/32_32_16_2sprite.png",32,32);
+	Sprite *bloonSprite1 = LoadSprite("images/bbloon.png",16,16);
+	Sprite *bloonSprite2 = LoadSprite("images/rbloon.png",16,16);
 	
 	if (type == 1)
 	{
-		bloon = Spawn_Ent(700, 10, 0, 1, 0, bloonSprite1, 1, 50);
+		bloon = Spawn_Ent(715, 0, 0, 1, 0, bloonSprite1, 1, 50);
 		bloon->think = bloonThink;
 	}
 	else if (type == 2)
 	{
-		bloon = Spawn_Ent(700, 10, 0, 1, 0, bloonSprite2, 2, 50);
+		bloon = Spawn_Ent(715, 0, 0, 1, 0, bloonSprite2, 2, 50);
+		bloon->think = bloonThink;
+	}
+	else if (type == 3)
+	{
+		bloon = Spawn_Ent(715, 0, 0, 1, 0, bloonSprite2, 3, 50);
+		bloon->think = bloonThink;
+	}
+	else if (type == 4)
+	{
+		bloon = Spawn_Ent(715, 0, 0, 1, 0, bloonSprite2, 4, 50);
 		bloon->think = bloonThink;
 	}
 	else
@@ -127,7 +141,7 @@ void spBloon(int type) //spawn a bloon of type 1 or 2
 void spBullet(int towerX, int towerY, int dir, int type) //spawn a bullet at tower's location
 {
 	Entity *bullet;
-	Sprite *bSprite = LoadSprite("images/16_16_16_2sprite.png",16,16);
+	Sprite *bSprite = LoadSprite("images/bullet.png",16,16);
 	
 	//hard code x and y velocity based on dir
 	int xVel;
@@ -154,7 +168,7 @@ void spBullet(int towerX, int towerY, int dir, int type) //spawn a bullet at tow
 void spDumb()
 {
 	Entity *dumbBullet;
-	Sprite *dumbSprite = LoadSprite("images/16_16_16_2sprite.png",16,16);
+	Sprite *dumbSprite = LoadSprite("images/bullet.png",16,16);
 	dumbBullet = Spawn_Ent(958, 22, 0, 0, 0, dumbSprite, -1, 100);
 
 	dumbBullet->think = dumbThink;
@@ -172,7 +186,7 @@ void spTower(int towerX, int towerY, int dir, int type)
 	
 	if(ECON >= cost){	
 		Entity *tower;
-		Sprite *tSprite = LoadSprite("images/32_32_16_2sprite.png",32,32);
+		Sprite *tSprite = LoadSprite("images/tower.png",32,32);
 		dir = ROTATION;
 
 		tower = Spawn_Ent(towerX, towerY, 0, 0, dir, tSprite, -1, type);
@@ -229,27 +243,44 @@ void bloonThink(Entity *thatEnt) //pathfinding
 {
 	int bloonX = thatEnt -> x;
 	int bloonY = thatEnt -> y;
+	int cnt = 1;
+
+	/*
+	while(cnt <= 40) {
+		if(bloonX == BloonArray[cnt] && bloonY == BloonArray[cnt + 1] ) {
+			if(BloonArray[cnt + 2] < 1000){thatEnt->xVel = BloonArray[cnt + 2];}
+			if(BloonArray[cnt + 3] < 1000){thatEnt->yVel = BloonArray[cnt + 3];}
+			else{
+				LIVES--;
+				Free_Ent(thatEnt);
+			}
+		}
+		cnt += 4;
+	}
+	*/
 
 	//script path finding here
-	if(bloonX == 700 && bloonY == 350 ) {
+	if(bloonX == 715 && bloonY == 400 ) {
 		thatEnt->xVel = -1;
 		thatEnt->yVel = 0;
 	}
-	if(bloonX == 300 && bloonY == 350 ) {
+	if(bloonX == 345 && bloonY == 400 ) {
 		thatEnt->xVel = 0;
 		thatEnt->yVel = 1;
 	}
-	if(bloonX == 300 && bloonY == 750 ) {
+	if(bloonX == 345 && bloonY == 750 ) {
 		LIVES--;
 		Free_Ent(thatEnt);
 	}
 }
 
 //start a wave based on LEVEL variable
-void startWave(int SpawnRate/*a bigger number is a slower rate, recoomended 15*/, int lvl2mix/*chance out of 10 that a lvl 2 bloon spawns*/, int numBloons)  
+void startWave(int SpawnRate/*a bigger number is a slower rate, recoomended 15*/, int lvl2mix, int lvl3mix, int lvl4mix, int numBloons)  
 {
 	spr = SpawnRate;
-	l2m = lvl2mix;
+	l2m = lvl2mix - 1; //for a 0 chance, the variable must be -1
+	l3m = lvl3mix - 1;
+	l4m = lvl4mix - 1;
 	nbs = numBloons;
 	bloonsSpawned = 0;
 	waitTime = SpawnRate + (rand()%4) - 2;
@@ -354,6 +385,24 @@ void update()
 				}
 			}
 
+			//can't place towers on top of one another
+			if (tempEnt->type <= 4) //if the entity is a tower
+			{
+				int Xdist;
+				int Ydist;
+				int tempDist;
+
+				Xdist = (tempEnt->x) - MOUSEX;
+				Ydist = (tempEnt->y) - MOUSEY;
+				if (Xdist < 0){Xdist = Xdist * -1;}
+				if (Ydist < 0){Ydist = Ydist * -1;}
+
+				tempDist = (Xdist * Xdist) + (Ydist * Ydist);
+				if (tempDist <= 1024){   //if colliding
+					CANPLACE = 0;
+				}
+			}
+
 			Move_Ent(tempEnt, tempEnt->xVel, tempEnt->yVel); //moves all entities
 
 			//out of bounds detection
@@ -372,20 +421,17 @@ void update()
 		{
 			if( (TIME/waitTime) * waitTime == TIME)
 			{
-				int randNum = rand()%10;
+				int randNum1 = rand()%10;
+				int randNum2 = rand()%10;
+				int randNum3 = rand()%10;
 			
-				if (randNum <= l2m)
-				{
-					spBloon(2);
-					bloonsSpawned++;
-					waitTime = spr + (rand()%4) - 2;
-				}
-				else
-				{
-					spBloon(1);
-					bloonsSpawned++;
-					waitTime = spr + (rand()%4) - 2;
-				}
+				if (randNum1 <= l4m){spBloon(4);}
+				else if (randNum2 <= l3m){spBloon(3);}
+				else if (randNum3 <= l2m){spBloon(2);}
+				else{spBloon(1);}
+
+				bloonsSpawned++;
+				waitTime = spr + (rand()%4) - 2;
 			}
 		}
 		else{waveInProg = 0; LEVEL++;}
