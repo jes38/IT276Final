@@ -6,6 +6,7 @@
 #include "graphics.h"
 #include "sprite.h"
 #include "entity.h"
+#include "update.h"
 
 extern SDL_Surface *screen;
 extern SDL_Surface *buffer; /*pointer to the draw buffer*/
@@ -26,6 +27,10 @@ int BloonArray[41];
 int MOUSEX;
 int MOUSEY;
 int CANPLACE;
+int BORD;
+int TORD;
+
+int PAUSED;
 
 /*this program must be run from the directory directly below images and src, not from within src*/
 /*notice the default arguments for main.  SDL expects main to look like that, so don't change it*/
@@ -80,10 +85,15 @@ int main(int argc, char *argv[])
   //spawn the dummy bullet
   spDumb();
 
-  ECON = 30; //players resources
+  ECON = 300; //players resources (Normal: 30)
   LIVES = 50; //lives before game over
   LEVEL = 1; //what level the player is on
   ROTATION = 0; //rotation that next tower placed will have
+  BORD = 0;
+  TORD = 0;
+  readyForWave = 1;
+
+  PAUSED = 0;
 
   done = 0;
   do
@@ -106,10 +116,11 @@ int main(int argc, char *argv[])
 		{
 			//start a wave
 			int bloonNum;
-			if(waveInProg == 0)
+			if(waveInProg == 0 && readyForWave == 1)
 			{
 				bloonNum = LEVEL * 20;
 				startWave(15,3,0,0,bloonNum);
+				readyForWave = 0;
 			}
 			doOnce = 1;
 		}
@@ -117,9 +128,8 @@ int main(int argc, char *argv[])
 		//spawn a tower
 		if(CANPLACE == 1){
 			if(keys[SDLK_1]){spTower(mx,my,0,1); doOnce = 1;}
-			if(keys[SDLK_2]){spTower(mx,my,0,2); doOnce = 1;}
-			if(keys[SDLK_3]){spTower(mx,my,0,3); doOnce = 1;}
-			if(keys[SDLK_4]){spTower(mx,my,0,4); doOnce = 1;}
+			if(keys[SDLK_2]){spTower(mx,my,0,3); doOnce = 1;}
+			if(keys[SDLK_3]){spTower(mx,my,0,5); doOnce = 1;}
 		}
 		CANPLACE = 1;
 
@@ -130,8 +140,16 @@ int main(int argc, char *argv[])
 			if (ROTATION == 360){ROTATION = 0;}
 			doOnce = 1;
 		}
+
+		if(keys[SDLK_p])
+		{
+			if(PAUSED == 0){PAUSED = 1;}
+			else{PAUSED = 0;}
+
+			doOnce = 1;
+		}
 	}
-	if(keys[SDLK_1]==0 && keys[SDLK_2]==0 && keys[SDLK_3]==0 && keys[SDLK_4]==0 && keys[SDLK_SPACE]==0 && keys[SDLK_TAB]==0){doOnce = 0;}
+	if(keys[SDLK_1]==0 && keys[SDLK_2]==0 && keys[SDLK_3]==0 && keys[SDLK_SPACE]==0 && keys[SDLK_TAB]==0 && keys[SDLK_p]==0){doOnce = 0;}
 
 	if(LIVES == 0)done = 1;
     if(keys[SDLK_ESCAPE])done = 1;

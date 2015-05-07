@@ -6,6 +6,7 @@
 #include "graphics.h"
 #include "sprite.h"
 #include "entity.h"
+#include "update.h"
 
 extern SDL_Surface *screen;
 extern int ECON;
@@ -15,11 +16,9 @@ extern int ROTATION;
 extern int MOUSEX;
 extern int MOUSEY;
 extern int CANPLACE;
+extern int BORD;
+extern int TORD;
 extern int BloonArray[];
-
-extern SDL_Surface *message;
-extern TTF_Font *font;
-extern SDL_Color textColor;
 
 Entity *initEnt(void)  //place entity in entList
 {
@@ -42,20 +41,7 @@ Entity *initEnt(void)  //place entity in entList
 	return entPointer;
 }
 
-void Move_Ent(Entity *thisEnt, int xAmnt, int yAmnt)  //move a specific entity by a certain ammount
-{
-	int offX;
-	int offY;
-
-	thisEnt -> x += xAmnt;
-	thisEnt -> y += yAmnt;
-
-	offX = thisEnt->x - thisEnt->size;
-	offY = thisEnt->y - thisEnt->size;
-	if(thisEnt->sprite != NULL) DrawSprite(thisEnt->sprite, screen, offX, offY, 0);
-}
-
-Entity *Spawn_Ent(int spawnX, int spawnY, int xVel, int yVel, int dir, Sprite *sprite, int health, int type)  //spawn new entity at a location
+Entity *Spawn_Ent(int spawnX, int spawnY, int xVel, int yVel, int dir, Sprite *sprite, int health, int type, int ord)  //spawn new entity at a location
 {
 	Entity *entPointer = initEnt();
 	int offX;
@@ -70,8 +56,10 @@ Entity *Spawn_Ent(int spawnX, int spawnY, int xVel, int yVel, int dir, Sprite *s
 	entPointer -> health = health;
 	entPointer -> type = type;
 	entPointer -> colliding = 0;
-	if (type==1 || type==2 || type ==3 || type==4){entPointer -> size = 16;}
+	entPointer -> order = ord;
+	if (type >= 1 && type <= 10){entPointer -> size = 16;}
 	else {entPointer -> size = 8;}
+	entPointer -> think = NULL;
 	offX = spawnX - entPointer->size;
 	offY = spawnY - entPointer->size;
 
@@ -112,22 +100,32 @@ void spBloon(int type) //spawn a bloon of type 1 or 2
 	
 	if (type == 1)
 	{
-		bloon = Spawn_Ent(715, 0, 0, 1, 0, bloonSprite1, 1, 50);
+		BORD += 1;
+		bloon = Spawn_Ent(715, 0, 0, 1, 0, bloonSprite1, 1, 50, BORD);
 		bloon->think = bloonThink;
 	}
 	else if (type == 2)
 	{
-		bloon = Spawn_Ent(715, 0, 0, 1, 0, bloonSprite2, 2, 50);
+		BORD += 1;
+		bloon = Spawn_Ent(715, 0, 0, 1, 0, bloonSprite2, 2, 50, BORD);
 		bloon->think = bloonThink;
 	}
 	else if (type == 3)
 	{
-		bloon = Spawn_Ent(715, 0, 0, 1, 0, bloonSprite2, 3, 50);
+		BORD += 1;
+		bloon = Spawn_Ent(715, 0, 0, 1, 0, bloonSprite2, 3, 50, BORD);
 		bloon->think = bloonThink;
 	}
 	else if (type == 4)
 	{
-		bloon = Spawn_Ent(715, 0, 0, 1, 0, bloonSprite2, 4, 50);
+		BORD += 1;
+		bloon = Spawn_Ent(715, 0, 0, 1, 0, bloonSprite2, 4, 50, BORD);
+		bloon->think = bloonThink;
+	}
+	else if (type == 5)
+	{
+		BORD += 1;
+		bloon = Spawn_Ent(715, 0, 0, 1, 0, bloonSprite2, 10, 50, BORD);
 		bloon->think = bloonThink;
 	}
 	else
@@ -138,7 +136,7 @@ void spBloon(int type) //spawn a bloon of type 1 or 2
 	
 }
 
-void spBullet(int towerX, int towerY, int dir, int type) //spawn a bullet at tower's location
+void spBullet(int towerX, int towerY, int dir, int type, int towerNum) //spawn a bullet at tower's location
 {
 	Entity *bullet;
 	Sprite *bSprite = LoadSprite("images/bullet.png",16,16);
@@ -161,7 +159,7 @@ void spBullet(int towerX, int towerY, int dir, int type) //spawn a bullet at tow
 		xVel *= 2;
 		yVel *= 2;
 	}
-	bullet = Spawn_Ent(towerX, towerY, xVel, yVel, dir, bSprite, 1, 40);
+	bullet = Spawn_Ent(towerX, towerY, xVel, yVel, dir, bSprite, 1, 40, towerNum);
 }
 
 //spawn dummy bullet once for UI
@@ -169,7 +167,7 @@ void spDumb()
 {
 	Entity *dumbBullet;
 	Sprite *dumbSprite = LoadSprite("images/bullet.png",16,16);
-	dumbBullet = Spawn_Ent(958, 22, 0, 0, 0, dumbSprite, -1, 100);
+	dumbBullet = Spawn_Ent(958, 22, 0, 0, 0, dumbSprite, -1, 100, 0);
 
 	dumbBullet->think = dumbThink;
 }
@@ -180,16 +178,27 @@ void spTower(int towerX, int towerY, int dir, int type)
 {
 	int cost;
 	if(type == 1){cost = 20;}
-	if(type == 2){cost = 30;}
 	if(type == 3){cost = 30;}
-	if(type == 4){cost = 40;}
+	if(type == 5){cost = 60;}
 	
 	if(ECON >= cost){	
 		Entity *tower;
-		Sprite *tSprite = LoadSprite("images/tower.png",32,32);
-		dir = ROTATION;
+		Sprite *tSprite;
 
-		tower = Spawn_Ent(towerX, towerY, 0, 0, dir, tSprite, -1, type);
+		if(type == 1){
+			tSprite = LoadSprite("images/tower.png",32,32);
+		}
+		else if(type == 3){
+			tSprite = LoadSprite("images/tower.png",32,32);
+		}
+		else if(type == 5){
+			tSprite = LoadSprite("images/tower.png",32,32);
+		}
+		else {tSprite = LoadSprite("images/tower.png",32,32);}
+
+		dir = ROTATION;
+		TORD -= 1;
+		tower = Spawn_Ent(towerX, towerY, 0, 0, dir, tSprite, 0, type, TORD);
 		tower->think = towerThink;
 
 		ECON = ECON - cost;
@@ -206,18 +215,52 @@ void towerThink(Entity *thatEnt) //fire bullets
 	int towerY = thatEnt -> y;
 	int dir = thatEnt -> dir;
 	int type = thatEnt -> type;
+	int towerNum = thatEnt -> order;
 	
+	//upgrade tower if health (xp) is greater than 10
+	if (type == 1 && thatEnt->health >= 10){
+		thatEnt->type = 2;
+	}
+	if (type == 3 && thatEnt->health >= 10){
+		thatEnt->type = 4;
+	}
+	if (type == 5 && thatEnt->health >= 10){
+		thatEnt->type = 6;
+	}
+	
+	//spawn bullets based on tower type
 	if (type == 1){
-		if( (TIME/30) * 30 == TIME){spBullet(towerX, towerY, dir, 1);}
+		if( (TIME/30) * 30 == TIME){spBullet(towerX, towerY, dir, 1, towerNum);}
 	}
 	else if (type == 2){
-		if( (TIME/20) * 20 == TIME){spBullet(towerX, towerY, dir, 1);}
+		if( (TIME/30) * 30 == TIME){spBullet(towerX, towerY, dir, 2, towerNum);}
 	}
 	else if (type == 3){
-		if( (TIME/30) * 30 == TIME){spBullet(towerX, towerY, dir, 2);}
+		if( (TIME/20) * 20 == TIME){spBullet(towerX, towerY, dir, 1, towerNum);}
 	}
 	else if (type == 4){
-		if( (TIME/20) * 20 == TIME){spBullet(towerX, towerY, dir, 2);}
+		if( (TIME/20) * 20 == TIME){spBullet(towerX, towerY, dir, 2, towerNum);}
+	}
+	else if (type == 5){
+		if( (TIME/30) * 30 == TIME){
+			spBullet(towerX, towerY, 0, 1, towerNum);
+			spBullet(towerX, towerY, 90, 1, towerNum);
+			spBullet(towerX, towerY, 180, 1, towerNum);
+			spBullet(towerX, towerY, 270, 1, towerNum);
+		}
+	}
+	else if (type == 6){
+		if( (TIME/30) * 30 == TIME){
+			spBullet(towerX, towerY, 0, 1, towerNum);
+			spBullet(towerX, towerY, 90, 1, towerNum);
+			spBullet(towerX, towerY, 180, 1, towerNum);
+			spBullet(towerX, towerY, 270, 1, towerNum);
+
+			spBullet(towerX, towerY, 45, 1, towerNum);
+			spBullet(towerX, towerY, 135, 1, towerNum);
+			spBullet(towerX, towerY, 225, 1, towerNum);
+			spBullet(towerX, towerY, 315, 1, towerNum);
+		}
 	}
 }
 
@@ -269,7 +312,7 @@ void bloonThink(Entity *thatEnt) //pathfinding
 		thatEnt->yVel = 1;
 	}
 	if(bloonX == 345 && bloonY == 750 ) {
-		LIVES--;
+		LIVES -= thatEnt->health;
 		Free_Ent(thatEnt);
 	}
 }
@@ -277,6 +320,7 @@ void bloonThink(Entity *thatEnt) //pathfinding
 //start a wave based on LEVEL variable
 void startWave(int SpawnRate/*a bigger number is a slower rate, recoomended 15*/, int lvl2mix, int lvl3mix, int lvl4mix, int numBloons)  
 {
+	BORD = 0;
 	spr = SpawnRate;
 	l2m = lvl2mix - 1; //for a 0 chance, the variable must be -1
 	l3m = lvl3mix - 1;
@@ -286,155 +330,4 @@ void startWave(int SpawnRate/*a bigger number is a slower rate, recoomended 15*/
 	waitTime = SpawnRate + (rand()%4) - 2;
 	
 	waveInProg = 1;
-}
-
-void DrawUI() //self explanatory
-{
-	char lvl[40];
-	char econ[45];
-	char lives[10];
-	SDL_Rect R;
-
-	sprintf(lvl, "Level: %d", LEVEL);
-	sprintf(econ, "Resources: %d", ECON);
-	sprintf(lives, "Lives: %d", LIVES);
-
-	
-	R.x = 0;
-	R.y = 0;
-	R.w = 0;
-	R.h = 0;
-
-	if (message != NULL)
-	{
-		SDL_FreeSurface(message);
-	}
-	message = TTF_RenderText_Solid( font, lvl, textColor );
-	SDL_BlitSurface(message, NULL, screen, &R);
-	
-	R.y = 30;
-	if (message != NULL)
-	{
-		SDL_FreeSurface(message);
-	}
-	message = TTF_RenderText_Solid( font, econ, textColor );
-	SDL_BlitSurface(message, NULL, screen, &R);
-	
-	R.y = 60;
-	if (message != NULL)
-	{
-		SDL_FreeSurface(message);
-	}
-	message = TTF_RenderText_Solid( font, lives, textColor );
-	SDL_BlitSurface(message, NULL, screen, &R);
-}
-
-//main update function
-void update()
-{
-	int i = 0;
-	while (i < maxEnts)
-	{
-		//do think function
-		if(entList[i].inuse == 1 && entList[i].think != NULL)
-		{
-			(*entList[i].think)(&entList[i]);
-		}
-
-		//scrolls through entities in use
-		if(entList[i].inuse == 1)
-		{
-			Entity *tempEnt;
-			int X;
-			int Y;
-
-			tempEnt = &entList[i];
-			X = tempEnt -> x;
-			Y = tempEnt -> y;
-
-			//detect if bullet collides with bloon
-			if (tempEnt->type == 40) //if the entity is a bullet
-			{
-				int q = 0;
-				while (q < maxEnts)
-				{
-					if(entList[q].inuse==1 && entList[q].type==50) //if the enemy is a bloon
-					{
-						Entity *enemy;
-						int Xdist;
-						int Ydist;
-						int tempDist;
-						enemy = &entList[q];
-
-						Xdist = (tempEnt->x) - (enemy->x);
-						Ydist = (tempEnt->y) - (enemy->y);
-						if (Xdist < 0){Xdist = Xdist * -1;}
-						if (Ydist < 0){Ydist = Ydist * -1;}
-
-						tempDist = (Xdist * Xdist) + (Ydist * Ydist);
-						if (tempDist <= 256){   //if colliding
-							tempEnt->health -= 1;
-							enemy->health -= 1;
-							ECON++;
-
-							if(tempEnt->health == 0){Free_Ent(tempEnt);}
-							if(enemy->health == 0){Free_Ent(enemy);}
-						}
-					}
-					q++;
-				}
-			}
-
-			//can't place towers on top of one another
-			if (tempEnt->type <= 4) //if the entity is a tower
-			{
-				int Xdist;
-				int Ydist;
-				int tempDist;
-
-				Xdist = (tempEnt->x) - MOUSEX;
-				Ydist = (tempEnt->y) - MOUSEY;
-				if (Xdist < 0){Xdist = Xdist * -1;}
-				if (Ydist < 0){Ydist = Ydist * -1;}
-
-				tempDist = (Xdist * Xdist) + (Ydist * Ydist);
-				if (tempDist <= 1024){   //if colliding
-					CANPLACE = 0;
-				}
-			}
-
-			Move_Ent(tempEnt, tempEnt->xVel, tempEnt->yVel); //moves all entities
-
-			//out of bounds detection
-			if(X < -35 || X > 1059) Free_Ent(tempEnt);
-			if(Y < -35 || Y > 803)	Free_Ent(tempEnt);
-		}
-		i++;
-	}
-
-	TIME++; //level time
-
-	//controls waves
-	if (waveInProg == 1)
-	{
-		if (bloonsSpawned < nbs)
-		{
-			if( (TIME/waitTime) * waitTime == TIME)
-			{
-				int randNum1 = rand()%10;
-				int randNum2 = rand()%10;
-				int randNum3 = rand()%10;
-			
-				if (randNum1 <= l4m){spBloon(4);}
-				else if (randNum2 <= l3m){spBloon(3);}
-				else if (randNum3 <= l2m){spBloon(2);}
-				else{spBloon(1);}
-
-				bloonsSpawned++;
-				waitTime = spr + (rand()%4) - 2;
-			}
-		}
-		else{waveInProg = 0; LEVEL++;}
-	}
-	
 }
