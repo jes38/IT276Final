@@ -9,15 +9,15 @@
 typedef struct ENTITY_T
 {
 	int inuse;
-	int x;
-	int y;
-	int xVel;
-	int yVel;
+	double x;
+	double y;
+	double xVel;
+	double yVel;
 	int dir;
 	int health;
 	int type;
 	int colliding;
-	int size;
+	double size;
 	int order;
 
 	Sprite *sprite;
@@ -35,12 +35,12 @@ int numEnts;
 Entity *initEnt(void);
 void Free_Ent(Entity *thisEnt);
 void freeAllEnts();
-Entity *Spawn_Ent(int spawnX, int spawnY, int xVel, int yVel, int dir, Sprite *sprite, int health, int type, int ord);
+Entity *Spawn_Ent(double spawnX, double spawnY, double xVel, double yVel, int dir, Sprite *sprite, int health, int type, int ord);
 
 //spawn specific entity types
 void spBloon(int type);
-void spBullet(int towerX, int towerY, int dir, int type, int towerNum);
-void spTower(int towerX, int towerY, int dir, int type);
+void spBullet(double towerX, double towerY, double xVel, double yVel, int type, int towerNum);
+void spTower(double towerX, double towerY, int dir, int type);
 void spDumb();
 
 //entity think functions

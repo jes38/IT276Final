@@ -23,10 +23,10 @@ extern SDL_Surface *message;
 extern TTF_Font *font;
 extern SDL_Color textColor;
 
-void Move_Ent(Entity *thisEnt, int xAmnt, int yAmnt)  //move a specific entity by a certain ammount
+void Move_Ent(Entity *thisEnt, double xAmnt, double yAmnt)  //move a specific entity by a certain ammount
 {
-	int offX;
-	int offY;
+	double offX;
+	double offY;
 
 	thisEnt -> x += xAmnt;
 	thisEnt -> y += yAmnt;
@@ -112,8 +112,8 @@ void update()
 		if(entList[i].inuse == 1)
 		{
 			Entity *tempEnt;
-			int X;
-			int Y;
+			double X;
+			double Y;
 
 			tempEnt = &entList[i];
 			X = tempEnt -> x;
@@ -121,7 +121,9 @@ void update()
 
 			if (tempEnt->type == 50){readyForWave = 0;}
 
+			//////////////////////////////////////
 			//detect if bullet collides with bloon
+			//////////////////////////////////////
 			if (tempEnt->type == 40) //if the entity is a bullet
 			{
 				int q = 0;
@@ -130,9 +132,9 @@ void update()
 					if(entList[q].inuse==1 && entList[q].type==50) //if the enemy is a bloon
 					{
 						Entity *enemy;
-						int Xdist;
-						int Ydist;
-						int tempDist;
+						double Xdist;
+						double Ydist;
+						double tempDist;
 						enemy = &entList[q];
 
 						Xdist = (tempEnt->x) - (enemy->x);
@@ -141,7 +143,7 @@ void update()
 						if (Ydist < 0){Ydist = Ydist * -1;}
 
 						tempDist = (Xdist * Xdist) + (Ydist * Ydist);
-						if (tempDist <= 256){   //if colliding
+						if (tempDist <= 64){   //if colliding (is it 64 or 256?)
 							tempEnt->health -= 1;
 							enemy->health -= 1;
 							ECON++;
@@ -162,9 +164,9 @@ void update()
 			//can't place towers on top of one another
 			if (tempEnt->type <= 4) //if the entity is a tower
 			{
-				int Xdist;
-				int Ydist;
-				int tempDist;
+				double Xdist;
+				double Ydist;
+				double tempDist;
 
 				Xdist = (tempEnt->x) - MOUSEX;
 				Ydist = (tempEnt->y) - MOUSEY;

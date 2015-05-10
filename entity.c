@@ -13,8 +13,6 @@ extern int ECON;
 extern int LIVES;
 extern int LEVEL;
 extern int ROTATION;
-extern int MOUSEX;
-extern int MOUSEY;
 extern int CANPLACE;
 extern int BORD;
 extern int TORD;
@@ -41,11 +39,11 @@ Entity *initEnt(void)  //place entity in entList
 	return entPointer;
 }
 
-Entity *Spawn_Ent(int spawnX, int spawnY, int xVel, int yVel, int dir, Sprite *sprite, int health, int type, int ord)  //spawn new entity at a location
+Entity *Spawn_Ent(double spawnX, double spawnY, double xVel, double yVel, int dir, Sprite *sprite, int health, int type, int ord)  //spawn new entity at a location
 {
 	Entity *entPointer = initEnt();
-	int offX;
-	int offY;
+	double offX;
+	double offY;
 
 	entPointer -> x = spawnX;
 	entPointer -> y = spawnY;
@@ -136,12 +134,12 @@ void spBloon(int type) //spawn a bloon of type 1 or 2
 	
 }
 
-void spBullet(int towerX, int towerY, int dir, int type, int towerNum) //spawn a bullet at tower's location
+void spBullet(double towerX, double towerY, double xVel, double yVel, int type, int towerNum) //spawn a bullet at tower's location
 {
 	Entity *bullet;
 	Sprite *bSprite = LoadSprite("images/bullet.png",16,16);
 	
-	//hard code x and y velocity based on dir
+	/*//hard code x and y velocity based on dir
 	int xVel;
 	int yVel;
 	
@@ -152,14 +150,18 @@ void spBullet(int towerX, int towerY, int dir, int type, int towerNum) //spawn a
 	else if (dir == 180){xVel = 0; yVel = 2;}
 	else if (dir == 225){xVel = -1; yVel = 1;}
 	else if (dir == 270){xVel = -2; yVel = 0;}
-	else if (dir == 315){xVel = -1; yVel = -1;}
+	else if (dir == 315){xVel = -1; yVel = -1;}*/
 	
-	//add velocity if using bullet type 2
-	if (type == 2){
+	//add velocity to base direction
+	if (type == 1){
 		xVel *= 2;
 		yVel *= 2;
 	}
-	bullet = Spawn_Ent(towerX, towerY, xVel, yVel, dir, bSprite, 1, 40, towerNum);
+	if (type == 2){
+		xVel *= 4;
+		yVel *= 4;
+	}
+	bullet = Spawn_Ent(towerX, towerY, xVel, yVel, 0, bSprite, 1, 40, towerNum);
 }
 
 //spawn dummy bullet once for UI
@@ -174,7 +176,7 @@ void spDumb()
 
 
 //spawn a tower of type 1, 2, 3, or 4
-void spTower(int towerX, int towerY, int dir, int type)
+void spTower(double towerX, double towerY, int dir, int type)
 {
 	int cost;
 	if(type == 1){cost = 20;}
@@ -211,8 +213,14 @@ void spTower(int towerX, int towerY, int dir, int type)
 
 void towerThink(Entity *thatEnt) //fire bullets
 {
-	int towerX = thatEnt -> x;
-	int towerY = thatEnt -> y;
+	double targXVel;
+	double targYVel;
+	
+	int targ = 1500;
+	int q = 0;
+
+	double towerX = thatEnt -> x;
+	double towerY = thatEnt -> y;
 	int dir = thatEnt -> dir;
 	int type = thatEnt -> type;
 	int towerNum = thatEnt -> order;
@@ -228,46 +236,76 @@ void towerThink(Entity *thatEnt) //fire bullets
 		thatEnt->type = 6;
 	}
 	
+	//////////////
+	//Targeting AI
+	//////////////
+	while (q < maxEnts)
+	{
+		if(entList[q].inuse==1 && entList[q].type==50) //if the enemy is a bloon
+		{
+			Entity *enemy;
+			double Xdist;
+			double Ydist;
+			double tempDist;
+			enemy = &entList[q];
+
+			Xdist = (thatEnt->x) - (enemy->x);
+			Ydist = (thatEnt->y) - (enemy->y);
+
+			tempDist = (Xdist * Xdist) + (Ydist * Ydist);
+			if (tempDist <= 16384 && enemy->order < targ){ //if a bloon is in range
+				if (Xdist < 0){targXVel = (Xdist * Xdist) / tempDist;}
+				else {targXVel = (Xdist * Xdist) / tempDist * -1;}
+
+				if (Ydist < 0){targYVel = (Ydist * Ydist) / tempDist;}
+				else {targYVel = (Ydist * Ydist) / tempDist * -1;}
+				
+				targ = enemy->order;
+			}
+		}
+		q++;
+	}
+
 	//spawn bullets based on tower type
 	if (type == 1){
-		if( (TIME/30) * 30 == TIME){spBullet(towerX, towerY, dir, 1, towerNum);}
+		if( (TIME/30) * 30 == TIME){spBullet(towerX, towerY, targXVel, targYVel, 1, towerNum);}
 	}
 	else if (type == 2){
-		if( (TIME/30) * 30 == TIME){spBullet(towerX, towerY, dir, 2, towerNum);}
+		if( (TIME/30) * 30 == TIME){spBullet(towerX, towerY, targXVel, targYVel, 2, towerNum);}
 	}
 	else if (type == 3){
-		if( (TIME/20) * 20 == TIME){spBullet(towerX, towerY, dir, 1, towerNum);}
+		if( (TIME/20) * 20 == TIME){spBullet(towerX, towerY, targXVel, targYVel, 1, towerNum);}
 	}
 	else if (type == 4){
-		if( (TIME/20) * 20 == TIME){spBullet(towerX, towerY, dir, 2, towerNum);}
+		if( (TIME/20) * 20 == TIME){spBullet(towerX, towerY, targXVel, targYVel, 2, towerNum);}
 	}
 	else if (type == 5){
 		if( (TIME/30) * 30 == TIME){
-			spBullet(towerX, towerY, 0, 1, towerNum);
-			spBullet(towerX, towerY, 90, 1, towerNum);
-			spBullet(towerX, towerY, 180, 1, towerNum);
-			spBullet(towerX, towerY, 270, 1, towerNum);
+			spBullet(towerX, towerY, 0, -1, 1, towerNum);
+			spBullet(towerX, towerY, 0, 1, 1, towerNum);
+			spBullet(towerX, towerY, 1, 0, 1, towerNum);
+			spBullet(towerX, towerY, -1, 0, 1, towerNum);
 		}
 	}
 	else if (type == 6){
 		if( (TIME/30) * 30 == TIME){
-			spBullet(towerX, towerY, 0, 1, towerNum);
-			spBullet(towerX, towerY, 90, 1, towerNum);
-			spBullet(towerX, towerY, 180, 1, towerNum);
-			spBullet(towerX, towerY, 270, 1, towerNum);
+			spBullet(towerX, towerY, 0, -1, 1, towerNum);
+			spBullet(towerX, towerY, 0, 1, 1, towerNum);
+			spBullet(towerX, towerY, 1, 0, 1, towerNum);
+			spBullet(towerX, towerY, -1, 0, 1, towerNum);
 
-			spBullet(towerX, towerY, 45, 1, towerNum);
-			spBullet(towerX, towerY, 135, 1, towerNum);
-			spBullet(towerX, towerY, 225, 1, towerNum);
-			spBullet(towerX, towerY, 315, 1, towerNum);
+			spBullet(towerX, towerY, 0, 0.707, 1, towerNum);
+			spBullet(towerX, towerY, 0, -0.707, 1, towerNum);
+			spBullet(towerX, towerY, 0.707, 0, 1, towerNum);
+			spBullet(towerX, towerY, -0.707, 0, 1, towerNum);
 		}
 	}
 }
 
 void dumbThink(Entity *thatEnt) //edit position based on ROTATION variable
 {
-	int dumbx;
-	int dumby;
+	double dumbx;
+	double dumby;
 	
 	if (ROTATION == 0){dumbx = 958; dumby = 22;}
 	if (ROTATION == 45){dumbx = 974; dumby = 22;}
@@ -284,11 +322,10 @@ void dumbThink(Entity *thatEnt) //edit position based on ROTATION variable
 
 void bloonThink(Entity *thatEnt) //pathfinding
 {
-	int bloonX = thatEnt -> x;
-	int bloonY = thatEnt -> y;
-	int cnt = 1;
+	double bloonX = thatEnt -> x;
+	double bloonY = thatEnt -> y;
 
-	/*
+	/*int cnt = 1;
 	while(cnt <= 40) {
 		if(bloonX == BloonArray[cnt] && bloonY == BloonArray[cnt + 1] ) {
 			if(BloonArray[cnt + 2] < 1000){thatEnt->xVel = BloonArray[cnt + 2];}
@@ -299,8 +336,7 @@ void bloonThink(Entity *thatEnt) //pathfinding
 			}
 		}
 		cnt += 4;
-	}
-	*/
+	}*/
 
 	//script path finding here
 	if(bloonX == 715 && bloonY == 400 ) {
