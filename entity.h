@@ -41,13 +41,11 @@ Entity *Spawn_Ent(double spawnX, double spawnY, double xVel, double yVel, int di
 void spBloon(int type);
 void spBullet(double towerX, double towerY, double xVel, double yVel, int type, int towerNum);
 void spTower(double towerX, double towerY, int dir, int type);
-void spDumb();
 
 //entity think functions
 void towerThink(Entity *thatEnt);
 void bulletThink(Entity *thatEnt);
 void bloonThink(Entity *thatEnt);
-void dumbThink(Entity *thatEnt);
 
 //wave stuff
 void startWave(int SpawnRate, int lvl2mix, int lvl3mix, int lvl4mix, int numBloons);
@@ -61,4 +59,11 @@ int waitTime;
 int waveInProg;
 int readyForWave;
 
+struct transform
+{
+	int x;
+	int y;
+	int xVel;
+	int yVel;
+};
 #endif

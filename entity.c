@@ -16,7 +16,7 @@ extern int ROTATION;
 extern int CANPLACE;
 extern int BORD;
 extern int TORD;
-extern int BloonArray[];
+extern struct transform BloonArray[];
 
 Entity *initEnt(void)  //place entity in entList
 {
@@ -99,31 +99,31 @@ void spBloon(int type) //spawn a bloon of type 1 or 2
 	if (type == 1)
 	{
 		BORD += 1;
-		bloon = Spawn_Ent(715, 0, 0, 1, 0, bloonSprite1, 1, 50, BORD);
+		bloon = Spawn_Ent(BloonArray[0].x, 0, 0, 1, 0, bloonSprite1, 1, 50, BORD);
 		bloon->think = bloonThink;
 	}
 	else if (type == 2)
 	{
 		BORD += 1;
-		bloon = Spawn_Ent(715, 0, 0, 1, 0, bloonSprite2, 2, 50, BORD);
+		bloon = Spawn_Ent(BloonArray[0].x, 0, 0, 1, 0, bloonSprite2, 2, 50, BORD);
 		bloon->think = bloonThink;
 	}
 	else if (type == 3)
 	{
 		BORD += 1;
-		bloon = Spawn_Ent(715, 0, 0, 1, 0, bloonSprite2, 3, 50, BORD);
+		bloon = Spawn_Ent(BloonArray[0].x, 0, 0, 1, 0, bloonSprite2, 3, 50, BORD);
 		bloon->think = bloonThink;
 	}
 	else if (type == 4)
 	{
 		BORD += 1;
-		bloon = Spawn_Ent(715, 0, 0, 1, 0, bloonSprite2, 4, 50, BORD);
+		bloon = Spawn_Ent(BloonArray[0].x, 0, 0, 1, 0, bloonSprite2, 4, 50, BORD);
 		bloon->think = bloonThink;
 	}
 	else if (type == 5)
 	{
 		BORD += 1;
-		bloon = Spawn_Ent(715, 0, 0, 1, 0, bloonSprite2, 10, 50, BORD);
+		bloon = Spawn_Ent(BloonArray[0].x, 0, 0, 1, 0, bloonSprite2, 10, 50, BORD);
 		bloon->think = bloonThink;
 	}
 	else
@@ -139,19 +139,6 @@ void spBullet(double towerX, double towerY, double xVel, double yVel, int type, 
 	Entity *bullet;
 	Sprite *bSprite = LoadSprite("images/bullet.png",16,16);
 	
-	/*//hard code x and y velocity based on dir
-	int xVel;
-	int yVel;
-	
-	if (dir == 0){xVel = 0; yVel = -2;}
-	else if (dir == 45){xVel = 1; yVel = -1;}
-	else if (dir == 90){xVel = 2; yVel = 0;}
-	else if (dir == 135){xVel = 1; yVel = 1;}
-	else if (dir == 180){xVel = 0; yVel = 2;}
-	else if (dir == 225){xVel = -1; yVel = 1;}
-	else if (dir == 270){xVel = -2; yVel = 0;}
-	else if (dir == 315){xVel = -1; yVel = -1;}*/
-	
 	//add velocity to base direction
 	if (type == 1){
 		xVel *= 2;
@@ -161,19 +148,9 @@ void spBullet(double towerX, double towerY, double xVel, double yVel, int type, 
 		xVel *= 4;
 		yVel *= 4;
 	}
-	bullet = Spawn_Ent(towerX, towerY, xVel, yVel, 0, bSprite, 1, 40, towerNum);
+	bullet = Spawn_Ent(towerX, towerY, xVel, yVel, 0, bSprite, 100, 40, towerNum);
+	bullet->think = bulletThink;
 }
-
-//spawn dummy bullet once for UI
-void spDumb()
-{
-	Entity *dumbBullet;
-	Sprite *dumbSprite = LoadSprite("images/bullet.png",16,16);
-	dumbBullet = Spawn_Ent(958, 22, 0, 0, 0, dumbSprite, -1, 100, 0);
-
-	dumbBullet->think = dumbThink;
-}
-
 
 //spawn a tower of type 1, 2, 3, or 4
 void spTower(double towerX, double towerY, int dir, int type)
@@ -302,55 +279,33 @@ void towerThink(Entity *thatEnt) //fire bullets
 	}
 }
 
-void dumbThink(Entity *thatEnt) //edit position based on ROTATION variable
-{
-	double dumbx;
-	double dumby;
-	
-	if (ROTATION == 0){dumbx = 958; dumby = 22;}
-	if (ROTATION == 45){dumbx = 974; dumby = 22;}
-	if (ROTATION == 90){dumbx = 974; dumby = 38;}
-	if (ROTATION == 135){dumbx = 974; dumby = 54;}
-	if (ROTATION == 180){dumbx = 958; dumby = 54;}
-	if (ROTATION == 225){dumbx = 942; dumby = 54;}
-	if (ROTATION == 270){dumbx = 942; dumby = 38;}
-	if (ROTATION == 315){dumbx = 942; dumby = 22;}
-
-	thatEnt->x = dumbx;
-	thatEnt->y = dumby;
-}
-
 void bloonThink(Entity *thatEnt) //pathfinding
 {
 	double bloonX = thatEnt -> x;
 	double bloonY = thatEnt -> y;
 
-	/*int cnt = 1;
-	while(cnt <= 40) {
-		if(bloonX == BloonArray[cnt] && bloonY == BloonArray[cnt + 1] ) {
-			if(BloonArray[cnt + 2] < 1000){thatEnt->xVel = BloonArray[cnt + 2];}
-			if(BloonArray[cnt + 3] < 1000){thatEnt->yVel = BloonArray[cnt + 3];}
-			else{
-				LIVES--;
-				Free_Ent(thatEnt);
-			}
+	int cnt = 0;
+	while(cnt <= 9) {
+		if(bloonX == BloonArray[cnt].x && bloonY == BloonArray[cnt].y ) {
+			thatEnt->xVel = BloonArray[cnt].xVel;
+			thatEnt->yVel = BloonArray[cnt].yVel;
 		}
-		cnt += 4;
-	}*/
+		cnt++;
+	}
 
 	//script path finding here
-	if(bloonX == 715 && bloonY == 400 ) {
+	/*if(bloonX == 715 && bloonY == 400 ) {
 		thatEnt->xVel = -1;
 		thatEnt->yVel = 0;
 	}
 	if(bloonX == 345 && bloonY == 400 ) {
 		thatEnt->xVel = 0;
 		thatEnt->yVel = 1;
-	}
-	if(bloonX == 345 && bloonY == 750 ) {
-		LIVES -= thatEnt->health;
-		Free_Ent(thatEnt);
-	}
+	}*/
+}
+
+void bulletThink(Entity *thatEnt){
+	thatEnt->health -= 1;
 }
 
 //start a wave based on LEVEL variable

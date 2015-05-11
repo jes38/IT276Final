@@ -16,8 +16,10 @@ extern int MOUSEY;
 extern int CANPLACE;
 extern int BORD;
 extern int TORD;
-extern int BloonArray[];
+extern struct transform BloonArray[];
 extern int PAUSED;
+extern int EDITMODE;
+extern int PLACE;
 
 extern SDL_Surface *message;
 extern TTF_Font *font;
@@ -25,15 +27,26 @@ extern SDL_Color textColor;
 
 void Move_Ent(Entity *thisEnt, double xAmnt, double yAmnt)  //move a specific entity by a certain ammount
 {
-	double offX;
-	double offY;
-
 	thisEnt -> x += xAmnt;
 	thisEnt -> y += yAmnt;
+}
 
-	offX = thisEnt->x - thisEnt->size;
-	offY = thisEnt->y - thisEnt->size;
-	if(thisEnt->sprite != NULL) DrawSprite(thisEnt->sprite, screen, offX, offY, 0);
+void Draw_All()
+{
+	int i;
+	for(i =0; i < maxEnts; i++){
+		if(entList[i].inuse){
+			Draw_Ent(&entList[i]);
+		}
+	}
+}
+
+void Draw_Ent (Entity *thatEnt){
+	if(thatEnt->sprite != NULL) 
+		DrawSprite(thatEnt->sprite, screen, 
+			thatEnt->x - thatEnt->size, 
+			thatEnt->y - thatEnt->size, 
+		0);
 }
 
 void DrawUI() //self explanatory
@@ -93,12 +106,55 @@ void LevelTower (int towerNum){
 	}
 }
 
+void editMode() {
+	if(EDITMODE%2 == 1 && PLACE == 1){
+ 		int tempPos = EDITMODE - 1;
+
+		BloonArray[tempPos].y = MOUSEY;
+
+		if(EDITMODE == 1){BloonArray[tempPos].x = MOUSEX;}
+		else {BloonArray[tempPos].x = BloonArray[tempPos - 1].x;}
+
+		if(EDITMODE != 1){
+			if(BloonArray[tempPos].y > BloonArray[tempPos - 1].y){
+				BloonArray[tempPos - 1].yVel = 1;
+			}
+			else {
+				BloonArray[tempPos - 1].yVel = -1;
+			}
+		}
+
+		BloonArray[tempPos].yVel = 0;
+
+		EDITMODE += 1;
+	}
+	else if (EDITMODE%2 == 0 && PLACE == 1){
+		int tempPos = EDITMODE - 1;
+
+		BloonArray[tempPos].x = MOUSEX;
+		
+		BloonArray[tempPos].y = BloonArray[tempPos - 1].y;
+
+		BloonArray[tempPos].xVel = 0;
+
+		if(BloonArray[tempPos].x > BloonArray[tempPos - 1].x){
+			BloonArray[tempPos - 1].xVel = 1;
+		}
+		else {BloonArray[tempPos - 1].xVel = -1;}
+
+		EDITMODE += 1;
+	}
+
+	PLACE = 0;
+}
+
 //main update function
 void update()
 {
 	int i = 0;
-
 	readyForWave = 1;
+
+	if(EDITMODE > 0){editMode();}
 
 	while (i < maxEnts)
 	{
@@ -124,6 +180,7 @@ void update()
 			//////////////////////////////////////
 			//detect if bullet collides with bloon
 			//////////////////////////////////////
+			if (tempEnt->type == 40 && tempEnt->health == 0){Free_Ent(tempEnt);} //first check to see if it's alive.
 			if (tempEnt->type == 40) //if the entity is a bullet
 			{
 				int q = 0;
@@ -144,7 +201,7 @@ void update()
 
 						tempDist = (Xdist * Xdist) + (Ydist * Ydist);
 						if (tempDist <= 64){   //if colliding (is it 64 or 256?)
-							tempEnt->health -= 1;
+							tempEnt->health = 0;
 							enemy->health -= 1;
 							ECON++;
 
@@ -183,8 +240,14 @@ void update()
 			else{Move_Ent(tempEnt, 0, 0);}
 
 			//out of bounds detection
-			if(X < -35 || X > 1059) Free_Ent(tempEnt);
-			if(Y < -35 || Y > 803)	Free_Ent(tempEnt);
+			if(X < -35 || X > 1059){
+				if(tempEnt->type == 50){LIVES--;}
+				Free_Ent(tempEnt);
+			}
+			if(Y < -35 || Y > 803){
+				if(tempEnt->type == 50){LIVES--;}
+				Free_Ent(tempEnt);
+			}
 		}
 		i++;
 	}
