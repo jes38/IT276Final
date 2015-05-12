@@ -16,6 +16,8 @@ extern int ROTATION;
 extern int CANPLACE;
 extern int BORD;
 extern int TORD;
+extern int MOUSEX;
+extern int MOUSEY;
 extern struct transform BloonArray[];
 
 Entity *initEnt(void)  //place entity in entList
@@ -56,6 +58,7 @@ Entity *Spawn_Ent(double spawnX, double spawnY, double xVel, double yVel, int di
 	entPointer -> colliding = 0;
 	entPointer -> order = ord;
 	if (type >= 1 && type <= 10){entPointer -> size = 16;}
+	else if (type == 50 && health > 5){entPointer -> size = 16;}
 	else {entPointer -> size = 8;}
 	entPointer -> think = NULL;
 	offX = spawnX - entPointer->size;
@@ -89,41 +92,45 @@ void freeAllEnts()  //free all entities
 /* Spawn specific entities */
 //
 
-void spBloon(int type) //spawn a bloon of type 1 or 2
+void spBloon(int type) //spawn a bloon of type 1 - 5
 {
 	Entity *bloon;
 
-	Sprite *bloonSprite1 = LoadSprite("images/bbloon.png",16,16);
-	Sprite *bloonSprite2 = LoadSprite("images/rbloon.png",16,16);
+	Sprite *bloonSprite;
 	
 	if (type == 1)
 	{
 		BORD += 1;
-		bloon = Spawn_Ent(BloonArray[0].x, 0, 0, 1, 0, bloonSprite1, 1, 50, BORD);
+		bloonSprite = LoadSprite("images/rbloon.png",16,16);
+		bloon = Spawn_Ent(BloonArray[0].x, 0, 0, 1, 0, bloonSprite, 1, 50, BORD);
 		bloon->think = bloonThink;
 	}
 	else if (type == 2)
 	{
 		BORD += 1;
-		bloon = Spawn_Ent(BloonArray[0].x, 0, 0, 1, 0, bloonSprite2, 2, 50, BORD);
+		bloonSprite = LoadSprite("images/bbloon.png",16,16);
+		bloon = Spawn_Ent(BloonArray[0].x, 0, 0, 1, 0, bloonSprite, 2, 50, BORD);
 		bloon->think = bloonThink;
 	}
 	else if (type == 3)
 	{
 		BORD += 1;
-		bloon = Spawn_Ent(BloonArray[0].x, 0, 0, 1, 0, bloonSprite2, 3, 50, BORD);
+		bloonSprite = LoadSprite("images/gbloon.png",16,16);
+		bloon = Spawn_Ent(BloonArray[0].x, 0, 0, 1, 0, bloonSprite, 3, 50, BORD);
 		bloon->think = bloonThink;
 	}
 	else if (type == 4)
 	{
 		BORD += 1;
-		bloon = Spawn_Ent(BloonArray[0].x, 0, 0, 1, 0, bloonSprite2, 4, 50, BORD);
+		bloonSprite = LoadSprite("images/shieldBloon.png",16,16);
+		bloon = Spawn_Ent(BloonArray[0].x, 0, 0, 1, 0, bloonSprite, 1, 51, BORD);
 		bloon->think = bloonThink;
 	}
 	else if (type == 5)
 	{
 		BORD += 1;
-		bloon = Spawn_Ent(BloonArray[0].x, 0, 0, 1, 0, bloonSprite2, 10, 50, BORD);
+		bloonSprite = LoadSprite("images/boss.png",32,32);
+		bloon = Spawn_Ent(BloonArray[0].x, 0, 0, 1, 0, bloonSprite, 15, 50, BORD);
 		bloon->think = bloonThink;
 	}
 	else
@@ -131,7 +138,6 @@ void spBloon(int type) //spawn a bloon of type 1 or 2
 		fprintf(stdout, "invalid bloon type\n");
 	}
 
-	
 }
 
 void spBullet(double towerX, double towerY, double xVel, double yVel, int type, int towerNum) //spawn a bullet at tower's location
@@ -158,20 +164,28 @@ void spTower(double towerX, double towerY, int dir, int type)
 	int cost;
 	if(type == 1){cost = 20;}
 	if(type == 3){cost = 30;}
-	if(type == 5){cost = 60;}
+	if(type == 5){cost = 30;}
+	if(type == 7){cost = 50;}
+	if(type == 9){cost = 100;}
 	
 	if(ECON >= cost){	
 		Entity *tower;
 		Sprite *tSprite;
 
 		if(type == 1){
-			tSprite = LoadSprite("images/tower.png",32,32);
+			tSprite = LoadSprite("images/tower1a.png",32,32);
 		}
 		else if(type == 3){
-			tSprite = LoadSprite("images/tower.png",32,32);
+			tSprite = LoadSprite("images/tower2a.png",32,32);
 		}
 		else if(type == 5){
-			tSprite = LoadSprite("images/tower.png",32,32);
+			tSprite = LoadSprite("images/tower3a.png",32,32);
+		}
+		else if(type == 7){
+			tSprite = LoadSprite("images/tower4a.png",32,32);
+		}
+		else if(type == 9){
+			tSprite = LoadSprite("images/tower5.png",32,32);
 		}
 		else {tSprite = LoadSprite("images/tower.png",32,32);}
 
@@ -203,45 +217,86 @@ void towerThink(Entity *thatEnt) //fire bullets
 	int towerNum = thatEnt -> order;
 	
 	//upgrade tower if health (xp) is greater than 10
-	if (type == 1 && thatEnt->health >= 10){
+	if (type == 1 && thatEnt->health == 10){
+		Sprite *tSprite;
+		tSprite = LoadSprite("images/tower1b.png",32,32);
 		thatEnt->type = 2;
+		thatEnt->sprite = tSprite;
+		thatEnt->health = 11;
 	}
-	if (type == 3 && thatEnt->health >= 10){
+	if (type == 3 && thatEnt->health == 10){
+		Sprite *tSprite;
+		tSprite = LoadSprite("images/tower2b.png",32,32);
 		thatEnt->type = 4;
+		thatEnt->sprite = tSprite;
+		thatEnt->health = 11;
 	}
-	if (type == 5 && thatEnt->health >= 10){
+	if (type == 5 && thatEnt->health == 10){
+		Sprite *tSprite;
+		tSprite = LoadSprite("images/tower3b.png",32,32);
 		thatEnt->type = 6;
+		thatEnt->sprite = tSprite;
+		thatEnt->health = 11;
+	}
+	if (type == 7 && thatEnt->health == 10){
+		Sprite *tSprite;
+		tSprite = LoadSprite("images/tower4b.png",32,32);
+		thatEnt->type = 8;
+		thatEnt->sprite = tSprite;
+		thatEnt->health = 11;
 	}
 	
 	//////////////
 	//Targeting AI
 	//////////////
-	while (q < maxEnts)
-	{
-		if(entList[q].inuse==1 && entList[q].type==50) //if the enemy is a bloon
+	if (thatEnt->type != 9){
+		while (q < maxEnts)
 		{
-			Entity *enemy;
-			double Xdist;
-			double Ydist;
-			double tempDist;
-			enemy = &entList[q];
+			if(entList[q].inuse==1 && (entList[q].type==50 || entList[q].type==51)) //if the enemy is a bloon
+			{
+				Entity *enemy;
+				double Xdist;
+				double Ydist;
+				double tempDist;
+				enemy = &entList[q];
 
-			Xdist = (thatEnt->x) - (enemy->x);
-			Ydist = (thatEnt->y) - (enemy->y);
+				Xdist = (thatEnt->x) - (enemy->x);
+				Ydist = (thatEnt->y) - (enemy->y);
 
-			tempDist = (Xdist * Xdist) + (Ydist * Ydist);
-			if (tempDist <= 16384 && enemy->order < targ){ //if a bloon is in range
-				if (Xdist < 0){targXVel = (Xdist * Xdist) / tempDist;}
-				else {targXVel = (Xdist * Xdist) / tempDist * -1;}
+				tempDist = (Xdist * Xdist) + (Ydist * Ydist);
+				if (tempDist <= 16384 && enemy->order < targ){ //if a bloon is in range
+					if (Xdist < 0){targXVel = (Xdist * Xdist) / tempDist;}
+					else {targXVel = (Xdist * Xdist) / tempDist * -1;}
 
-				if (Ydist < 0){targYVel = (Ydist * Ydist) / tempDist;}
-				else {targYVel = (Ydist * Ydist) / tempDist * -1;}
+					if (Ydist < 0){targYVel = (Ydist * Ydist) / tempDist;}
+					else {targYVel = (Ydist * Ydist) / tempDist * -1;}
 				
-				targ = enemy->order;
-				fireBull(towerX, towerY, targXVel, targYVel, type, towerNum);
+					targ = enemy->order;
+				}
 			}
+			q++;
 		}
-		q++;
+
+		fireBull(towerX, towerY, targXVel, targYVel, type, towerNum);	
+	}
+	else if (thatEnt->type == 9) {
+		double Xdist;
+		double Ydist;
+		double tempDist;
+
+		Xdist = (thatEnt->x) - MOUSEX;
+		Ydist = (thatEnt->y) - MOUSEY;
+
+		tempDist = (Xdist * Xdist) + (Ydist * Ydist);
+		
+		if (Xdist < 0){targXVel = (Xdist * Xdist) / tempDist;}
+		else {targXVel = (Xdist * Xdist) / tempDist * -1;}
+
+		if (Ydist < 0){targYVel = (Ydist * Ydist) / tempDist;}
+		else {targYVel = (Ydist * Ydist) / tempDist * -1;}
+				
+		fireBull(towerX, towerY, targXVel, targYVel, type, towerNum);
+		
 	}
 }
 
@@ -280,6 +335,29 @@ void fireBull(double towerX, double towerY, double targXVel, double targYVel, in
 			spBullet(towerX, towerY, 0.707, 0, 1, towerNum);
 			spBullet(towerX, towerY, -0.707, 0, 1, towerNum);
 		}
+	}
+	else if (type == 7){
+		if( (TIME/30) * 30 == TIME){
+			int randNum1 = rand()%10;
+			int randNum2 = rand()%10;
+			randNum1 - 5;
+			randNum2 - 5;
+
+			spBullet(towerX + randNum1, towerY + randNum2, 0, 0, 1, towerNum);
+		}
+	}
+	else if (type == 8){
+		if( (TIME/20) * 20 == TIME){
+			int randNum1 = rand()%10;
+			int randNum2 = rand()%10;
+			randNum1 - 5;
+			randNum2 - 5;
+
+			spBullet(towerX + randNum1, towerY + randNum2, 0, 0, 1, towerNum);
+		}
+	}
+	else if (type == 9){
+		if( (TIME/20) * 20 == TIME){spBullet(towerX, towerY, targXVel, targYVel, 2, towerNum);}
 	}
 }
 

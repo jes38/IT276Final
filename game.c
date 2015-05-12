@@ -82,11 +82,19 @@ int main(int argc, char *argv[])
   }
   */
 
-  //dummy tower for UI
-  towerDumb = LoadSprite("images/tower.png",32,32);
+  //dummy towers for UI
+  towerDumb = LoadSprite("images/tower1a.png",32,32);
   DrawSprite(towerDumb,buffer,942,22,0);
+  towerDumb = LoadSprite("images/tower2a.png",32,32);
+  DrawSprite(towerDumb,buffer,942,64,0);
+  towerDumb = LoadSprite("images/tower3a.png",32,32);
+  DrawSprite(towerDumb,buffer,942,106,0);
+  towerDumb = LoadSprite("images/tower4a.png",32,32);
+  DrawSprite(towerDumb,buffer,942,148,0);
+  towerDumb = LoadSprite("images/tower5.png",32,32);
+  DrawSprite(towerDumb,buffer,942,190,0);
 
-  ECON = 300; //players resources (Normal: 30)
+  ECON = 30; //players resources (Normal: 30)
   LIVES = 50; //lives before game over
   LEVEL = 1; //what level the player is on
   ROTATION = 0; //rotation that next tower placed will have
@@ -128,7 +136,8 @@ int main(int argc, char *argv[])
 			if(waveInProg == 0 && readyForWave == 1)
 			{
 				bloonNum = LEVEL * 20;
-				startWave(15,3,0,0,bloonNum);
+				if ((LEVEL/5 * 5) == LEVEL) {startWave(30,0,0,0,LEVEL/5);}
+				else {startWave(15,3,2,1,bloonNum);}
 				readyForWave = 0;
 			}
 			doOnce = 1;
@@ -140,11 +149,28 @@ int main(int argc, char *argv[])
 		}
 
 		//spawn a tower
-		if(CANPLACE == 1){
-			if(keys[SDLK_1]){spTower(mx,my,0,1); doOnce = 1;}
-			if(keys[SDLK_2]){spTower(mx,my,0,3); doOnce = 1;}
-			if(keys[SDLK_3]){spTower(mx,my,0,5); doOnce = 1;}
+		
+		if(keys[SDLK_1]){
+			pathCol();
+			if(CANPLACE == 1){spTower(mx,my,0,1); doOnce = 1;}
 		}
+		if(keys[SDLK_2]){
+			pathCol();
+			if(CANPLACE == 1){spTower(mx,my,0,3); doOnce = 1;}
+		}
+		if(keys[SDLK_3]){
+			pathCol();
+			if(CANPLACE == 1){spTower(mx,my,0,5); doOnce = 1;}
+		}
+		if(keys[SDLK_4]){
+			pathCol();
+			if(CANPLACE == 0){spTower(mx,my,0,7); doOnce = 1;}
+		}
+		if(keys[SDLK_5]){
+			pathCol();
+			if(CANPLACE == 1){spTower(mx,my,0,9); doOnce = 1;}
+		}
+		
 		CANPLACE = 1;
 
 		if(keys[SDLK_e] && readyForWave == 1)
@@ -175,7 +201,7 @@ int main(int argc, char *argv[])
 			doOnce = 1;
 		}
 	}
-	if(keys[SDLK_1]==0 && keys[SDLK_2]==0 && keys[SDLK_3]==0 && keys[SDLK_SPACE]==0 && keys[SDLK_e]==0 && keys[SDLK_d]==0 && keys[SDLK_p]==0){doOnce = 0;}
+	if(keys[SDLK_1]==0 && keys[SDLK_2]==0 && keys[SDLK_3]==0 && keys[SDLK_4]==0 && keys[SDLK_5]==0 && keys[SDLK_SPACE]==0 && keys[SDLK_e]==0 && keys[SDLK_d]==0 && keys[SDLK_p]==0){doOnce = 0;}
 
 	if(LIVES == 0)done = 1;
     if(keys[SDLK_ESCAPE])done = 1;

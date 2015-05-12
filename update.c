@@ -43,11 +43,13 @@ void Draw_All()
 }
 
 void Draw_Ent (Entity *thatEnt){
+	int frame = 0;
+	if(thatEnt->health <= 292 && thatEnt->health >= 250){frame = 1;}
 	if(thatEnt->sprite != NULL) 
 		DrawSprite(thatEnt->sprite, screen, 
 			thatEnt->x - thatEnt->size, 
 			thatEnt->y - thatEnt->size, 
-		0);
+		frame);
 }
 
 void DrawUI() //self explanatory
@@ -55,12 +57,24 @@ void DrawUI() //self explanatory
 	char lvl[40];
 	char econ[45];
 	char lives[10];
+
+	char cost1[3];
+	char cost2[3];
+	char cost3[3];
+	char cost4[3];
+	char cost5[3];
+
 	SDL_Rect R;
 
 	sprintf(lvl, "Level: %d", LEVEL);
 	sprintf(econ, "Resources: %d", ECON);
 	sprintf(lives, "Lives: %d", LIVES);
 
+	sprintf(cost1, "20");
+	sprintf(cost2, "30");
+	sprintf(cost3, "30");
+	sprintf(cost4, "50");
+	sprintf(cost5, "100");
 	
 	R.x = 0;
 	R.y = 0;
@@ -89,6 +103,47 @@ void DrawUI() //self explanatory
 	}
 	message = TTF_RenderText_Solid( font, lives, textColor );
 	SDL_BlitSurface(message, NULL, screen, &R);
+
+	R.x = 980;
+	R.y = 12;
+	if (message != NULL)
+	{
+		SDL_FreeSurface(message);
+	}
+	message = TTF_RenderText_Solid( font, cost1, textColor );
+	SDL_BlitSurface(message, NULL, screen, &R);
+	
+	R.y = 54;
+	if (message != NULL)
+	{
+		SDL_FreeSurface(message);
+	}
+	message = TTF_RenderText_Solid( font, cost2, textColor );
+	SDL_BlitSurface(message, NULL, screen, &R);
+	
+	R.y = 96;
+	if (message != NULL)
+	{
+		SDL_FreeSurface(message);
+	}
+	message = TTF_RenderText_Solid( font, cost3, textColor );
+	SDL_BlitSurface(message, NULL, screen, &R);
+
+	R.y = 138;
+	if (message != NULL)
+	{
+		SDL_FreeSurface(message);
+	}
+	message = TTF_RenderText_Solid( font, cost4, textColor );
+	SDL_BlitSurface(message, NULL, screen, &R);
+
+	R.y = 180;
+	if (message != NULL)
+	{
+		SDL_FreeSurface(message);
+	}
+	message = TTF_RenderText_Solid( font, cost5, textColor );
+	SDL_BlitSurface(message, NULL, screen, &R);
 }
 
 //used for leveling a tower
@@ -96,12 +151,9 @@ void LevelTower (int towerNum){
 	int i = 0;
 	while (i < maxEnts)
 	{
-		if(entList[i].inuse == 1 && entList[i].type >= 1 && entList[i].type <= 10 && entList[i].order == towerNum)
+		if(entList[i].inuse == 1 && entList[i].type >= 1 && entList[i].type <= 10 && entList[i].order == towerNum && entList[i].health <= 10)
 		{
-			Entity *tempEnt;
-			tempEnt = &entList[i];
-
-			tempEnt->health += 1;
+			entList[i].health += 1;
 		}
 		i++;
 	}
@@ -210,7 +262,15 @@ void update()
 			X = tempEnt -> x;
 			Y = tempEnt -> y;
 
-			if (tempEnt->type == 50){readyForWave = 0;}
+			if (tempEnt->type == 50 || tempEnt->type == 51){readyForWave = 0;}
+
+			if (tempEnt->type == 51) //turn shield bloon's shields on and off
+			{
+				if( (TIME/30) * 30 == TIME && tempEnt->health == 292){
+					tempEnt->health = 1;
+				}
+				else if((TIME/30) * 30 == TIME) {tempEnt->health = 292;}
+			}
 
 			//////////////////////////////////////
 			//detect if bullet collides with bloon
@@ -221,7 +281,7 @@ void update()
 				int q = 0;
 				while (q < maxEnts)
 				{
-					if(entList[q].inuse==1 && entList[q].type==50) //if the enemy is a bloon
+					if(entList[q].inuse==1 && (entList[q].type==50 || entList[q].type==51)) //if the enemy is a bloon
 					{
 						Entity *enemy;
 						double Xdist;
@@ -253,8 +313,6 @@ void update()
 				}
 			}
 
-			pathCol(); //can't place towers on path
-
 			//can't place towers on top of one another
 			if (tempEnt->type <= 10) //if the entity is a tower
 			{
@@ -269,7 +327,7 @@ void update()
 
 				tempDist = (Xdist * Xdist) + (Ydist * Ydist);
 				if (tempDist <= 1024){   //if other tower is colliding
-					CANPLACE = 0;
+					CANPLACE = 2;
 				}
 				if (tempDist <= 256 && DELETE){   //if mouse is colliding and d is being clicked
 					ECON += 10;
@@ -282,11 +340,11 @@ void update()
 
 			//out of bounds detection
 			if(X < -35 || X > 1059){
-				if(tempEnt->type == 50){LIVES--;}
+				if(tempEnt->type == 50 || tempEnt->type == 51){LIVES--;}
 				Free_Ent(tempEnt);
 			}
 			if(Y < -35 || Y > 803){
-				if(tempEnt->type == 50){LIVES--;}
+				if(tempEnt->type == 50 || tempEnt->type == 51){LIVES--;}
 				Free_Ent(tempEnt);
 			}
 		}
@@ -307,7 +365,10 @@ void update()
 				int randNum2 = rand()%10;
 				int randNum3 = rand()%10;
 			
-				if (randNum1 <= l4m){spBloon(4);}
+				if (l4m == -1 && l3m == -1 && l2m == -1){
+					spBloon(5);
+				}
+				else if (randNum1 <= l4m){spBloon(4);}
 				else if (randNum2 <= l3m){spBloon(3);}
 				else if (randNum3 <= l2m){spBloon(2);}
 				else{spBloon(1);}
