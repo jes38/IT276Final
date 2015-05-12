@@ -159,6 +159,7 @@ void LevelTower (int towerNum){
 	}
 }
 
+//launch editor mode. press e to enter and exit, press space to place turn.
 void editMode() {
 	if(EDITMODE%2 == 1 && PLACE == 1){
  		int tempPos = EDITMODE - 1;
@@ -235,46 +236,40 @@ void pathCol()
 	}
 }
 
-//main update function
-void update()
+//controls waves
+void doWave ()
 {
-	int i = 0;
-	readyForWave = 1;
-
-	if(EDITMODE > 0){editMode();}
-
-	while (i < maxEnts)
+	if (waveInProg == 1)
 	{
-		//do think function
-		if(entList[i].inuse == 1 && entList[i].think != NULL)
+		if (bloonsSpawned < nbs)
 		{
-			(*entList[i].think)(&entList[i]);
-		}
-
-		//scrolls through entities in use
-		if(entList[i].inuse == 1)
-		{
-			Entity *tempEnt;
-			double X;
-			double Y;
-
-			tempEnt = &entList[i];
-			X = tempEnt -> x;
-			Y = tempEnt -> y;
-
-			if (tempEnt->type == 50 || tempEnt->type == 51){readyForWave = 0;}
-
-			if (tempEnt->type == 51) //turn shield bloon's shields on and off
+			if( (TIME/waitTime) * waitTime == TIME)
 			{
-				if( (TIME/30) * 30 == TIME && tempEnt->health == 292){
-					tempEnt->health = 1;
+				int randNum1 = rand()%10;
+				int randNum2 = rand()%10;
+				int randNum3 = rand()%10;
+			
+				if (l4m == -1 && l3m == -1 && l2m == -1){
+					spBloon(5);
 				}
-				else if((TIME/30) * 30 == TIME) {tempEnt->health = 292;}
-			}
+				else if (randNum1 <= l4m){spBloon(4);}
+				else if (randNum2 <= l3m){spBloon(3);}
+				else if (randNum3 <= l2m){spBloon(2);}
+				else{spBloon(1);}
 
-			//////////////////////////////////////
-			//detect if bullet collides with bloon
-			//////////////////////////////////////
+				bloonsSpawned++;
+				waitTime = spr + (rand()%4) - 2;
+			}
+		}
+		else{waveInProg = 0; LEVEL++;}
+	}
+}
+
+//////////////////////////////////////
+//detect if bullet collides with bloon
+//////////////////////////////////////
+void bulletToBloonCol (Entity *tempEnt)
+{
 			if (tempEnt->type == 40 && tempEnt->health == 0){Free_Ent(tempEnt);} //first check to see if it's alive.
 			if (tempEnt->type == 40) //if the entity is a bullet
 			{
@@ -312,9 +307,12 @@ void update()
 					q++;
 				}
 			}
+}
 
-			//can't place towers on top of one another
-			if (tempEnt->type <= 10) //if the entity is a tower
+//can't place towers on top of one another
+void towerToTowerCol (Entity *tempEnt)
+{
+	if (tempEnt->type <= 10) //if the entity is a tower
 			{
 				double Xdist;
 				double Ydist;
@@ -334,6 +332,48 @@ void update()
 					Free_Ent(tempEnt);
 				}
 			}
+}
+
+//main update function
+void update()
+{
+	int i = 0;
+	readyForWave = 1;
+
+	if(EDITMODE > 0){editMode();}
+
+	while (i < maxEnts)
+	{
+		//do think function
+		if(entList[i].inuse == 1 && entList[i].think != NULL)
+		{
+			(*entList[i].think)(&entList[i]);
+		}
+
+		//scrolls through entities in use
+		if(entList[i].inuse == 1)
+		{
+			Entity *tempEnt;
+			double X;
+			double Y;
+
+			tempEnt = &entList[i];
+			X = tempEnt -> x;
+			Y = tempEnt -> y;
+
+			if (tempEnt->type == 50 || tempEnt->type == 51){readyForWave = 0;}
+
+			if (tempEnt->type == 51) //turn shield bloon's shields on and off
+			{
+				if( (TIME/30) * 30 == TIME && tempEnt->health == 292){
+					tempEnt->health = 1;
+				}
+				else if((TIME/30) * 30 == TIME) {tempEnt->health = 292;}
+			}
+
+			bulletToBloonCol (tempEnt);  //BRANDON: suggested update function be less crowded.
+
+			towerToTowerCol(tempEnt);
 
 			if(PAUSED == 0){Move_Ent(tempEnt, tempEnt->xVel, tempEnt->yVel);}//moves all entities
 			else{Move_Ent(tempEnt, 0, 0);}
@@ -354,30 +394,5 @@ void update()
 	if(PAUSED == 0){TIME++;} //level time
 	DELETE = 0;
 
-	//controls waves
-	if (waveInProg == 1)
-	{
-		if (bloonsSpawned < nbs)
-		{
-			if( (TIME/waitTime) * waitTime == TIME)
-			{
-				int randNum1 = rand()%10;
-				int randNum2 = rand()%10;
-				int randNum3 = rand()%10;
-			
-				if (l4m == -1 && l3m == -1 && l2m == -1){
-					spBloon(5);
-				}
-				else if (randNum1 <= l4m){spBloon(4);}
-				else if (randNum2 <= l3m){spBloon(3);}
-				else if (randNum3 <= l2m){spBloon(2);}
-				else{spBloon(1);}
-
-				bloonsSpawned++;
-				waitTime = spr + (rand()%4) - 2;
-			}
-		}
-		else{waveInProg = 0; LEVEL++;}
-	}
-	
+	doWave();
 }

@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
   towerDumb = LoadSprite("images/tower5.png",32,32);
   DrawSprite(towerDumb,buffer,942,190,0);
 
-  ECON = 30; //players resources (Normal: 30)
+  ECON = 60; //players resources (Normal: 60) BRANDON: need more resources to get past first round (old was 30)
   LIVES = 50; //lives before game over
   LEVEL = 1; //what level the player is on
   ROTATION = 0; //rotation that next tower placed will have
@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
 			{
 				bloonNum = LEVEL * 20;
 				if ((LEVEL/5 * 5) == LEVEL) {startWave(30,0,0,0,LEVEL/5);}
-				else {startWave(15,3,2,1,bloonNum);}
+				else {startWave(15,3,1,2,bloonNum);}
 				readyForWave = 0;
 			}
 			doOnce = 1;
@@ -345,4 +345,6 @@ void saveBloons(char * filepath)
 
     fclose(fileptr);
 }
+
+//BRANDON NOTES: Other than what he pointed out in the code, he noticed I forgot to label many of my functions
 

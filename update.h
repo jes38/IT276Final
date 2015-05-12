@@ -9,6 +9,9 @@ void DrawUI();
 void editMode();
 void LevelTower(int towerNum);
 void pathCol();
+void doWave();
+void bulletToBloonCol (Entity *tempEnt);
+void towerToTowerCol (Entity *tempEnt);
 
 Uint32 TIME;
 

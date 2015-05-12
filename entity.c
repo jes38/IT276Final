@@ -20,6 +20,8 @@ extern int MOUSEX;
 extern int MOUSEY;
 extern struct transform BloonArray[];
 
+int FIRE;
+
 Entity *initEnt(void)  //place entity in entList
 {
 	int i = 0;
@@ -64,7 +66,6 @@ Entity *Spawn_Ent(double spawnX, double spawnY, double xVel, double yVel, int di
 	offX = spawnX - entPointer->size;
 	offY = spawnY - entPointer->size;
 
-	//point in dir direction
 	DrawSprite(entPointer->sprite, screen, offX, offY, 0);
 	return entPointer;
 }
@@ -158,7 +159,7 @@ void spBullet(double towerX, double towerY, double xVel, double yVel, int type, 
 	bullet->think = bulletThink;
 }
 
-//spawn a tower of type 1, 2, 3, or 4
+//spawn a tower of type 1, 2, 3, 4, or 5
 void spTower(double towerX, double towerY, int dir, int type)
 {
 	int cost;
@@ -202,7 +203,7 @@ void spTower(double towerX, double towerY, int dir, int type)
 /*Entity Think functions*/
 //
 
-void towerThink(Entity *thatEnt) //fire bullets
+void towerThink(Entity *thatEnt) //fire bullets and target enemies
 {
 	double targXVel;
 	double targYVel;
@@ -272,14 +273,18 @@ void towerThink(Entity *thatEnt) //fire bullets
 					else {targYVel = (Ydist * Ydist) / tempDist * -1;}
 				
 					targ = enemy->order;
+					FIRE = 1;
 				}
 			}
 			q++;
 		}
 
-		fireBull(towerX, towerY, targXVel, targYVel, type, towerNum);	
+		if (FIRE == 1){    //BRANDON FOUND THIS: had to add this or tower would fire all the time
+			fireBull(towerX, towerY, targXVel, targYVel, type, towerNum);
+			FIRE = 0;
+		}
 	}
-	else if (thatEnt->type == 9) {
+	else if (thatEnt->type == 9) {  //player controlled tower doesn't need AI
 		double Xdist;
 		double Ydist;
 		double tempDist;
@@ -374,18 +379,9 @@ void bloonThink(Entity *thatEnt) //pathfinding
 		}
 		cnt++;
 	}
-
-	//script path finding here
-	/*if(bloonX == 715 && bloonY == 400 ) {
-		thatEnt->xVel = -1;
-		thatEnt->yVel = 0;
-	}
-	if(bloonX == 345 && bloonY == 400 ) {
-		thatEnt->xVel = 0;
-		thatEnt->yVel = 1;
-	}*/
 }
 
+//bullets lose health over time and die after a few seconds (if they don't hit anything)
 void bulletThink(Entity *thatEnt){
 	thatEnt->health -= 1;
 }
