@@ -8,6 +8,7 @@ void update();
 void DrawUI();
 void editMode();
 void LevelTower(int towerNum);
+void pathCol();
 
 Uint32 TIME;
 

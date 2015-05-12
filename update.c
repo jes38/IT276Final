@@ -20,6 +20,7 @@ extern struct transform BloonArray[];
 extern int PAUSED;
 extern int EDITMODE;
 extern int PLACE;
+extern int DELETE;
 
 extern SDL_Surface *message;
 extern TTF_Font *font;
@@ -148,6 +149,40 @@ void editMode() {
 	PLACE = 0;
 }
 
+//can't place towers on path
+void pathCol()
+{
+	int i;
+	for(i = 0; i < 10; i++)
+	{
+		if (i%2 == 1 && MOUSEY < (BloonArray[i].y + 32) && MOUSEY > (BloonArray[i].y - 32)){
+			if (BloonArray[i - 1].xVel < 0){
+				if (MOUSEX < BloonArray[i - 1].x && MOUSEX > BloonArray[i].x){
+					CANPLACE = 0;
+				}
+			}
+			else {
+				if (MOUSEX > BloonArray[i - 1].x && MOUSEX < BloonArray[i].x){
+					CANPLACE = 0;
+				}
+			}
+		}
+	
+		if (i%2 == 0 && MOUSEX < (BloonArray[i].x + 32) && MOUSEX > (BloonArray[i].x - 32)){
+			if (BloonArray[i - 1].yVel < 0){
+				if (MOUSEY < BloonArray[i - 1].y && MOUSEY > BloonArray[i].y){
+					CANPLACE = 0;
+				}
+			}
+			else {
+				if (MOUSEY > BloonArray[i - 1].y && MOUSEY < BloonArray[i].y){
+					CANPLACE = 0;
+				}
+			}
+		}
+	}
+}
+
 //main update function
 void update()
 {
@@ -218,8 +253,10 @@ void update()
 				}
 			}
 
+			pathCol(); //can't place towers on path
+
 			//can't place towers on top of one another
-			if (tempEnt->type <= 4) //if the entity is a tower
+			if (tempEnt->type <= 10) //if the entity is a tower
 			{
 				double Xdist;
 				double Ydist;
@@ -231,8 +268,12 @@ void update()
 				if (Ydist < 0){Ydist = Ydist * -1;}
 
 				tempDist = (Xdist * Xdist) + (Ydist * Ydist);
-				if (tempDist <= 1024){   //if colliding
+				if (tempDist <= 1024){   //if other tower is colliding
 					CANPLACE = 0;
+				}
+				if (tempDist <= 256 && DELETE){   //if mouse is colliding and d is being clicked
+					ECON += 10;
+					Free_Ent(tempEnt);
 				}
 			}
 
@@ -253,6 +294,7 @@ void update()
 	}
 
 	if(PAUSED == 0){TIME++;} //level time
+	DELETE = 0;
 
 	//controls waves
 	if (waveInProg == 1)

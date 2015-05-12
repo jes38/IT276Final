@@ -238,12 +238,16 @@ void towerThink(Entity *thatEnt) //fire bullets
 				else {targYVel = (Ydist * Ydist) / tempDist * -1;}
 				
 				targ = enemy->order;
+				fireBull(towerX, towerY, targXVel, targYVel, type, towerNum);
 			}
 		}
 		q++;
 	}
+}
 
-	//spawn bullets based on tower type
+//spawn bullets based on tower type
+void fireBull(double towerX, double towerY, double targXVel, double targYVel, int type, int towerNum)
+{
 	if (type == 1){
 		if( (TIME/30) * 30 == TIME){spBullet(towerX, towerY, targXVel, targYVel, 1, towerNum);}
 	}

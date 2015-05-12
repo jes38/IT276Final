@@ -44,6 +44,7 @@ void spTower(double towerX, double towerY, int dir, int type);
 
 //entity think functions
 void towerThink(Entity *thatEnt);
+void fireBull(double towerX, double towerY, double targXVel, double targYVel, int type, int towerNum);
 void bulletThink(Entity *thatEnt);
 void bloonThink(Entity *thatEnt);
 

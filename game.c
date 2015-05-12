@@ -30,6 +30,7 @@ int MOUSEY;
 int CANPLACE;
 int BORD;
 int TORD;
+int DELETE;
 
 int PAUSED;
 int EDITMODE;
@@ -92,6 +93,7 @@ int main(int argc, char *argv[])
   BORD = 0;
   TORD = 0;
   readyForWave = 1;
+  DELETE = 0;
 
   PAUSED = 0;
   EDITMODE = 0;
@@ -118,6 +120,7 @@ int main(int argc, char *argv[])
 		{
 			
 		}
+
 		if(keys[SDLK_SPACE] && EDITMODE == 0)
 		{
 			//start a wave
@@ -158,6 +161,12 @@ int main(int argc, char *argv[])
 			doOnce = 1;
 		}
 
+		if(keys[SDLK_d]){
+			DELETE = 1;
+
+			doOnce = 1;
+		}
+
 		if(keys[SDLK_p])
 		{
 			if(PAUSED == 0){PAUSED = 1;}
@@ -166,7 +175,7 @@ int main(int argc, char *argv[])
 			doOnce = 1;
 		}
 	}
-	if(keys[SDLK_1]==0 && keys[SDLK_2]==0 && keys[SDLK_3]==0 && keys[SDLK_SPACE]==0 && keys[SDLK_e]==0 && keys[SDLK_p]==0){doOnce = 0;}
+	if(keys[SDLK_1]==0 && keys[SDLK_2]==0 && keys[SDLK_3]==0 && keys[SDLK_SPACE]==0 && keys[SDLK_e]==0 && keys[SDLK_d]==0 && keys[SDLK_p]==0){doOnce = 0;}
 
 	if(LIVES == 0)done = 1;
     if(keys[SDLK_ESCAPE])done = 1;
